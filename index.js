@@ -226,6 +226,24 @@ ModbusRTU.prototype.open = function(callback) {
 
                 /* check incoming data
                  */
+				 if (transaction.customValidation && transaction.customDecode) {
+					 var error = transaction.customValidation(data);
+					 
+					 if (error && transaction.next) {
+                        transaction.next(new Error(error));
+					 }
+					 
+					 try {
+						 var result = transaction.customDecode(data);
+						 
+						 if (transaction.next)
+							transaction.next(null, { "data": result, "buffer": data.slice(3, 3 + length) });
+					 } catch (error) {
+						transaction.next(error, null);
+					 }
+
+					 return;
+				 }
 
                 /* check minimal length
                  */
@@ -349,6 +367,44 @@ ModbusRTU.prototype.isOpen = function() {
     }
 
     return false;
+};
+
+/**
+ * Write raw data to serial port.
+ *
+ * @param {number} address the slave unit address.
+ * @param {number} data the buffer containing data to write.
+ *
+ */
+ModbusRTU.prototype.writeRawData = function(address, data, next, validate, decode) {
+    // check port is actually open before attempting write
+    if (this.isOpen() !== true) {
+        if (next) next(new PortNotOpenError());
+        return;
+    }
+
+	// set state variables
+    this._transactions[this._port._transactionIdWrite] = {
+        nextAddress: null,
+        nextCode: null,
+        nextLength: 3 + parseInt((data.length - 1) / 8 + 1) + 2,
+        next: next,
+		customValidation: validate,
+		customDecode: decode
+    };
+
+	var buf = Buffer.alloc(data.length + 3); // add 1 address byte and 2 crc bytes
+	
+    buf.writeUInt8(address, 0);
+
+	// copy to destination buffer
+	data.copy(data, 1);
+	
+    // add crc bytes to buffer
+    buf.writeUInt16LE(crc16(buf.slice(0, -2)), data.length);
+
+    // write buffer to serial port
+    _writeBufferToPort.call(this, buf, this._port._transactionIdWrite);
 };
 
 /**
