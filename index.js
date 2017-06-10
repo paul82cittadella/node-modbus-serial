@@ -187,6 +187,10 @@ var ModbusRTU = function(port) {
     this._unitID = 1;
 };
 
+ModbusRTU.prototype.crc16 = function(data) {
+	return crc16(data);
+}
+
 /**
  * Open the serial port and register Modbus parsers
  *
