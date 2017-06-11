@@ -402,10 +402,10 @@ ModbusRTU.prototype.writeRawData = function(address, data, next, validate, decod
     buf.writeUInt8(address, 0);
 
 	// copy to destination buffer
-	data.copy(data, 1);
+	data.copy(buf, 1);
 	
     // add crc bytes to buffer
-    buf.writeUInt16LE(crc16(buf.slice(0, -2)), data.length);
+    buf.writeUInt16LE(crc16(buf.slice(0, -2)), buf.length - 2);
 
     // write buffer to serial port
     _writeBufferToPort.call(this, buf, this._port._transactionIdWrite);
