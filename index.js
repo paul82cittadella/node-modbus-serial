@@ -239,6 +239,7 @@ ModbusRTU.prototype.open = function(callback) {
 					 
 					 try {
 						 var result = transaction.customDecode(data);
+						 var length = data.readUInt8(2);
 						 
 						 if (transaction.next)
 							transaction.next(null, { "data": result, "buffer": data.slice(3, 3 + length) });
