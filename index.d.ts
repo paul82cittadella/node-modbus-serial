@@ -8,7 +8,7 @@ declare namespace ModbusRTU {
 
 	crc16(data: Buffer): number;
 	writeRawData(address: number, data: Buffer, next: NodeStyleCallback<any>, 
-		onDataReceived: (data: Buffer) => number): void;
+		onDataReceived: (data: Buffer) => boolean): void;
     writeFC1(address: number, dataAddress: number, length: number, next: NodeStyleCallback<ReadCoilResult>): void;
     writeFC2(address: number, dataAddress: number, length: number, next: NodeStyleCallback<ReadCoilResult>): void;
     writeFC3(address: number, dataAddress: number, length: number, next: NodeStyleCallback<ReadRegisterResult>): void;

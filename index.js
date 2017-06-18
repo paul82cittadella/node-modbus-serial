@@ -228,10 +228,10 @@ ModbusRTU.prototype.open = function(callback) {
                  */
 				 if (transaction.onDataReceived) {
 					 try {
-						 var remainingLength = transaction.onDataReceived(data);
+						 var isCompleted = transaction.onDataReceived(data);
 						 
 						 // Just complete the transaction (the buffer whole response buffer is not kept here)
-						 if (remainingLength === 0 && transaction.next) {
+						 if (isCompleted === true && transaction.next) {
 							_cancelTimeout(transaction._timeoutHandle);
 							transaction._timeoutHandle = undefined;
 							 
