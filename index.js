@@ -224,31 +224,32 @@ ModbusRTU.prototype.open = function(callback) {
                     return;
                 }
 
-                /* cancel the timeout */
-                _cancelTimeout(transaction._timeoutHandle);
-                transaction._timeoutHandle = undefined;
-
                 /* check incoming data
                  */
-				 if (transaction.customValidation && transaction.customDecode) {
-					 var error = transaction.customValidation(data);
-					 
-					 if (error && transaction.next) {
-                        transaction.next(new Error(error));
-					 }
-					 
+				 if (transaction.onDataReceived) {
 					 try {
-						 var result = transaction.customDecode(data);
-						 var length = data.readUInt8(2);
+						 var remainingLength = transaction.onDataReceived(data);
 						 
-						 if (transaction.next)
-							transaction.next(null, { "data": result, "buffer": data.slice(3, 3 + length) });
+						 // Just complete the transaction (the buffer whole response buffer is not kept here)
+						 if (remainingLength === 0 && transaction.next) {
+							_cancelTimeout(transaction._timeoutHandle);
+							transaction._timeoutHandle = undefined;
+							 
+							transaction.next(null, { "data": null, "buffer": null });
+						 }
 					 } catch (error) {
+						_cancelTimeout(transaction._timeoutHandle);
+						transaction._timeoutHandle = undefined;						 
+
 						transaction.next(error, null);
 					 }
 
 					 return;
 				 }
+
+				 /* cancel the timeout */
+                _cancelTimeout(transaction._timeoutHandle);
+                transaction._timeoutHandle = undefined;
 
                 /* check minimal length
                  */
@@ -381,7 +382,7 @@ ModbusRTU.prototype.isOpen = function() {
  * @param {number} data the buffer containing data to write.
  *
  */
-ModbusRTU.prototype.writeRawData = function(address, data, next, validate, decode) {
+ModbusRTU.prototype.writeRawData = function(address, data, next, onDataReceived) {
     // check port is actually open before attempting write
     if (this.isOpen() !== true) {
         if (next) next(new PortNotOpenError());
@@ -394,8 +395,7 @@ ModbusRTU.prototype.writeRawData = function(address, data, next, validate, decod
         nextCode: null,
         nextLength: 3 + parseInt((data.length - 1) / 8 + 1) + 2,
         next: next,
-		customValidation: validate,
-		customDecode: decode
+		onDataReceived: onDataReceived
     };
 
 	var buf = Buffer.alloc(data.length + 3); // add 1 address byte and 2 crc bytes
