@@ -1,13 +1,13 @@
 {
   "name": "modbus-serial",
-  "version": "5.3.4",
+  "version": "7.0.2",
   "description": "A pure JavaScript implemetation of MODBUS-RTU (Serial and TCP) for NodeJS.",
   "main": "index.js",
   "scripts": {
     "test": "mocha --recursive"
   },
   "publishConfig": {
-    "registry": "http://dogmatools.com:8094/"
+    "registry": "http://npm.sael.it:8094/"
   },
   "repository": {
     "type": "git",
